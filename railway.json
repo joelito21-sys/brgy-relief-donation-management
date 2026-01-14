@@ -15,8 +15,7 @@
                         "php82Extensions.zip",
                         "php82Extensions.gd",
                         "php82Extensions.bcmath",
-                        "nodejs_20",
-                        "npm"
+                        "nodejs_20"
                     ]
                 },
                 "install": {
