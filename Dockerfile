@@ -41,4 +41,6 @@ ENV FRANKENPHP_CONFIG="worker ./public/index.php"
 ENV PORT=8080
 
 # Start FrankenPHP
-CMD php artisan migrate --force && frankenphp php-server --listen :$PORT --root public/
+# We use a semicolon so that the server starts even if migrations haven't run yet, 
+# allowing you to see the application error page instead of a crash loop.
+CMD php artisan migrate --force ; frankenphp php-server --listen :$PORT --root public/
