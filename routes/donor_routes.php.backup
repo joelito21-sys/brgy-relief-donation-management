@@ -1,0 +1,147 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Features;
+use Laravel\Fortify\Http\Controllers\NewPasswordController;
+use Laravel\Fortify\Http\Controllers\PasswordResetLinkController;
+use App\Http\Controllers\Auth\DonorAuthenticatedSessionController;
+use App\Http\Controllers\Auth\DonorRegisteredUserController;
+use App\Http\Controllers\Donor\Donation\DonationHistoryController;
+use App\Http\Controllers\Donor\Donation\CashDonationController;
+use App\Http\Controllers\QrCodeController;
+
+// Donor routes - Guest
+Route::prefix('donor')->group(function () {
+    Route::middleware('guest:donor')->group(function () {
+        // Login Routes
+        Route::get('/login', [DonorAuthenticatedSessionController::class, 'create'])
+            ->name('donor.login');
+
+        Route::post('/login', [DonorAuthenticatedSessionController::class, 'store'])
+            ->name('donor.login.submit');
+
+        // Registration Routes
+        Route::get('/register', [DonorRegisteredUserController::class, 'create'])
+            ->name('donor.register');
+
+        Route::post('/register', [DonorRegisteredUserController::class, 'store'])
+            ->name('donor.register.submit');
+    });
+
+    // Password Reset Routes
+    if (Features::enabled(Features::resetPasswords())) {
+        if (config('fortify.views', true)) {
+            Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])
+                ->name('password.request');
+
+            Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
+                ->name('password.reset');
+
+            Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+                ->name('password.email');
+
+            Route::post('/reset-password', [NewPasswordController::class, 'store'])
+                ->name('password.update');
+        }
+    }
+});
+
+// Authenticated Donor Routes
+    // Authenticated Donor Routes
+    Route::middleware(['auth:donor'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', function () {
+        return view('donor.dashboard');
+    })->name('dashboard');
+
+    // Logout
+    Route::post('/logout', [DonorAuthenticatedSessionController::class, 'destroy'])
+        ->name('logout');
+
+    // Profile
+    Route::get('/profile', [\App\Http\Controllers\Donor\ProfileController::class, 'edit'])->name('profile');
+    Route::put('/profile', [\App\Http\Controllers\Donor\ProfileController::class, 'update'])->name('profile.update');
+
+    // Donations
+    Route::prefix('donations')->name('donations.')->group(function () {
+        // Main donation type selection
+        Route::get('/', function () {
+            return view('donor.donations.types.index', [
+                'breadcrumbs' => [
+                    ['label' => 'Donation Type']
+                ]
+            ]);
+        })->name('index');
+        
+        // Alias for create to maintain backward compatibility
+        Route::get('/create', function () {
+            return redirect()->route('donor.donations.index');
+        })->name('create');
+        
+        // Donation History and Details
+        Route::get('history', [DonationHistoryController::class, 'index'])->name('history');
+        Route::get('{donation}', [DonationHistoryController::class, 'show'])->name('show');
+        Route::get('thank-you/{donation}', [DonationHistoryController::class, 'thankYou'])->name('thank-you');
+        
+        // Cash Donation Routes
+        Route::prefix('cash')->name('cash.')->group(function () {
+            Route::get('/', [CashDonationController::class, 'create'])->name('index');
+            Route::post('/process', [CashDonationController::class, 'store'])->name('process');
+            
+            // Payment Methods
+            Route::get('/gcash', [CashDonationController::class, 'showGcashForm'])->name('gcash');
+            Route::post('/gcash/process', [CashDonationController::class, 'processGcashPayment'])->name('gcash.process');
+            
+            Route::get('/paymaya', [CashDonationController::class, 'showPaymayaForm'])->name('paymaya');
+            Route::post('/paymaya/process', [CashDonationController::class, 'processPaymayaPayment'])->name('paymaya.process');
+            
+            Route::get('/bank-transfer', [CashDonationController::class, 'showBankTransferForm'])->name('bank');
+            Route::post('/bank-transfer/process', [CashDonationController::class, 'processBankTransfer'])->name('bank.process');
+        });
+        
+        // Food Donation Routes
+        Route::prefix('food')->name('food.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Donor\Donation\FoodDonationController::class, 'create'])->name('index');
+            Route::post('/process', [\App\Http\Controllers\Donor\Donation\FoodDonationController::class, 'store'])->name('process');
+        });
+        
+        // Clothing Donation Routes
+        Route::prefix('clothing')->name('clothing.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Donor\Donation\ClothingDonationController::class, 'create'])->name('index');
+            Route::post('/process', [\App\Http\Controllers\Donor\Donation\ClothingDonationController::class, 'store'])->name('process');
+        });
+        
+        // Medicine Donation Routes
+        Route::prefix('medicine')->name('medicine.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Donor\Donation\MedicineDonationController::class, 'create'])->name('index');
+            Route::post('/process', [\App\Http\Controllers\Donor\Donation\MedicineDonationController::class, 'store'])->name('process');
+        });
+    });
+    
+    // Additional Features
+    Route::get('activities', function () {
+        return view('donor.activities');
+    })->name('activities');
+
+    // QR Code Generation
+    Route::prefix('qrcode')->name('qrcode.')->group(function () {
+        Route::get('gcash', [QrCodeController::class, 'generateGcashQr'])->name('gcash');
+        Route::get('paymaya', [QrCodeController::class, 'generatePaymayaQr'])->name('paymaya');
+        Route::get('bank', [QrCodeController::class, 'generateBankQr'])->name('bank');
+    });
+    
+    // About Us
+    Route::get('about', function () {
+        return view('donor.about');
+    })->name('about');
+    
+    // Contact
+    Route::get('contact', function () {
+        return view('donor.contact');
+    })->name('contact');
+    
+    // Settings
+    Route::get('settings', function () {
+        return view('donor.settings');
+    })->name('settings');
+});

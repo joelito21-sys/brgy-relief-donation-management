@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class ContactMessage extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'email',
+        'subject',
+        'message',
+        'status',
+        'admin_response',
+        'responded_at',
+        'donor_id',
+    ];
+
+    protected $casts = [
+        'responded_at' => 'datetime',
+    ];
+
+    public function donor()
+    {
+        return $this->belongsTo(Donor::class);
+    }
+}

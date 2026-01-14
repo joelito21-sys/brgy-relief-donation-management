@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "strict": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "lib": ["es2020", "dom", "dom.iterable"],
+    "skipLibCheck": true,
+    "noEmit": true,
+    "baseUrl": "."
+  },
+  "include": [
+    "resources/js/**/*.js"
+  ],
+  "exclude": ["node_modules", "vendor"]
+}
